@@ -2,7 +2,7 @@ from typing import List
 
 import imageio
 import imgaug as ia
-from imgaug import augmenters as iaa
+from imgaug import augmenters as iaa, BoundingBox, BoundingBoxesOnImage
 import matplotlib.pyplot as plt
 from PIL import Image
 import numpy as np
@@ -19,6 +19,7 @@ def main(args=None):
     # image_structs = build_image_structs(source_image_paths, images, labeled_boxes)
     image_structs = augment(image_structs)
     save_images(image_structs)
+    save_labels(image_structs)
 
 
 def save_images(image_structs: List[ImageStruct]):
@@ -26,6 +27,15 @@ def save_images(image_structs: List[ImageStruct]):
         image_pil = Image.fromarray(image_struct.data)
         target_image_path = pathlib.Path.cwd().joinpath('images').joinpath('target').joinpath(image_struct.name)
         image_pil.save('{}.jpg'.format(str(target_image_path)))
+
+
+def save_labels(image_structs: List[ImageStruct]):
+    for image_struct in image_structs:
+        target_label_path = pathlib.Path.cwd()\
+            .joinpath('images')\
+            .joinpath('target')\
+            .joinpath(image_struct.name + '.xml')
+        target_label_path.write_text('saving {}'.format(image_struct.name))
 
 
 def augment(image_structs: List[ImageStruct]) -> List[ImageStruct]:
@@ -44,14 +54,35 @@ def augment(image_structs: List[ImageStruct]) -> List[ImageStruct]:
     return result
 
 
+def to_bounding_boxes_on_image(image_struct: ImageStruct) -> BoundingBoxesOnImage:
+    bounding_boxes: List[BoundingBox] = []
+    for b in image_struct.labeled_boxes:
+        bounding_boxes.append(BoundingBox(10, 20, 100, 200))
+    return BoundingBoxesOnImage(bounding_boxes, image_struct.data.shape)
+
+
+def to_labeled_boxes(bounding_boxes_on_image: BoundingBoxesOnImage) -> List[LabeledBox]:
+    result: List[LabeledBox] = []
+    for b in bounding_boxes_on_image.bounding_boxes:
+        result.append(LabeledBox(b.x1, b.y1, b.x2, b.y2))
+    return result
+
+
 def augment_rotation(image_struct: ImageStruct):
     result: List[ImageStruct] = []
-    images = [image_struct.data, image_struct.data, image_struct.data, image_struct.data]
+    images = [image_struct.data,
+              image_struct.data,
+              image_struct.data,
+              image_struct.data]
+    boxes = [to_bounding_boxes_on_image(image_struct),
+             to_bounding_boxes_on_image(image_struct),
+             to_bounding_boxes_on_image(image_struct),
+             to_bounding_boxes_on_image(image_struct)]
     rotate = iaa.Affine(rotate=(-30, 30))
-    augmentations = rotate(images=images)
+    augmentations, augmented_boxes = rotate(images=images, bounding_boxes=boxes)
     for i in range(len(augmentations)):
         image_name = '{}_rot_{}'.format(image_struct.name, i)
-        result.append(ImageStruct(image_name, augmentations[i], None))
+        result.append(ImageStruct(image_name, augmentations[i], to_labeled_boxes(augmented_boxes[i])))
     return result
 
 
@@ -62,7 +93,7 @@ def augment_noise(image_struct: ImageStruct):
     result: List[ImageStruct] = []
     for i in range(len(augmented_images)):
         image_name = '{}_ns_{}'.format(image_struct.name, i)
-        result.append(ImageStruct(image_name, augmented_images[i], None))
+        result.append(ImageStruct(image_name, augmented_images[i], image_struct.labeled_boxes))
     return result
 
 
