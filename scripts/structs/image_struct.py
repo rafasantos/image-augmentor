@@ -1,7 +1,7 @@
-import numpy as np
+from typing import List
 
 
-class BoundingBox:
+class LabeledBox:
     def __init__(self, x1, y1, x2, y2):
         self.x1 = x1
         self.y1 = y1
@@ -10,7 +10,7 @@ class BoundingBox:
 
 
 class ImageStruct:
-    def __init__(self, name: str, data, bounding_box: BoundingBox):
+    def __init__(self, name: str, data, labeled_boxes: List[LabeledBox]):
         self.name = name
         self.data = data
-        self.bounding_box = bounding_box
+        self.labeled_boxes = labeled_boxes
