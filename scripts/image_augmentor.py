@@ -20,15 +20,22 @@ def save_images(augmented_images_by_name):
         image_array = augmented_images_by_name[image_name]
         image_pil = Image.fromarray(image_array)
         target_image_path = pathlib.Path.cwd().joinpath('images').joinpath('target').joinpath(image_name)
-        image_pil.save(target_image_path)
+        image_pil.save('{}.jpg'.format(str(target_image_path)))
 
 
 def augment(images_by_name):
-    result = {}
+    augmented_images_by_name = {}
+    # Augmentations
     for image_name in images_by_name:
-        image = images_by_name[image_name]
-        rotated_images_by_name = augment_rotation(image_name, image)
+        noise_images_by_name = augment_noise(image_name, images_by_name[image_name])
+        augmented_images_by_name.update(noise_images_by_name)
+
+    # Rotate augmentations
+    result = {}
+    for image_name in augmented_images_by_name:
+        rotated_images_by_name = augment_rotation(image_name, augmented_images_by_name[image_name])
         result.update(rotated_images_by_name)
+
     return result
 
 
@@ -38,7 +45,18 @@ def augment_rotation(image_name, image):
     rotate = iaa.Affine(rotate=(-30, 30))
     augmented_images = rotate(images=images)
     for i in range(len(augmented_images)):
-        augmented_image_name = '{}_rotation_{}.jpg'.format(image_name, i)
+        augmented_image_name = '{}_rot_{}'.format(image_name, i)
+        result[augmented_image_name] = augmented_images[i]
+    return result
+
+
+def augment_noise(image_name, image):
+    result = {}
+    images = [image, image, image]
+    gaussian_noise = iaa.AdditiveGaussianNoise(scale=(10, 30))
+    augmented_images = gaussian_noise(images=images)
+    for i in range(len(augmented_images)):
+        augmented_image_name = '{}_ns_{}'.format(image_name, i)
         result[augmented_image_name] = augmented_images[i]
     return result
 
