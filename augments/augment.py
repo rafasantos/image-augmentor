@@ -1,7 +1,8 @@
 import random
 from typing import List
 
-from imgaug.augmenters import Affine, AdditiveGaussianNoise, ScaleX, ScaleY, ShearX, ShearY, Rotate
+from imgaug.augmenters import AdditiveGaussianNoise, ScaleX, ScaleY, ShearX, ShearY, Rotate, PerspectiveTransform, \
+    CropAndPad
 from imgaug.augmenters.imgcorruptlike import ElasticTransform, Fog
 
 from builders.meta_image import to_bounding_boxes_on_image, to_labeled_boxes
@@ -20,8 +21,10 @@ def augment(m_images: List[MetaImage]) -> List[MetaImage]:
         augmentations.append(augment_scale_y(m_image))
         augmentations.append(augment_shear_x(m_image))
         augmentations.append(augment_shear_y(m_image))
+        augmentations.append(augment_perspective(m_image))
 
-    # Apply two combined augmentations at random (do not augmentations that change the size of the image in here)
+    # Apply two combined augmentations at random
+    # Do not augmentations that change the size of the image in this session because we don't wont to bleed the images
     for m_image in m_images:
         augmented_image = m_image
         for i in range(2):
@@ -54,6 +57,13 @@ def augment_fog(m_image: MetaImage) -> MetaImage:
     augmented_image = augmentation(image=m_image.data)
     image_name = '{}_fog'.format(m_image.name)
     return MetaImage(image_name, augmented_image, m_image.labeled_boxes)
+
+
+def augment_perspective(m_image: MetaImage) -> MetaImage:
+    image_aug, bbs_aug = CropAndPad(percent=.25)(image=m_image.data, bounding_boxes=to_bounding_boxes_on_image(m_image))
+    image_aug, bbs_aug = PerspectiveTransform(scale=(.08, .12))(image=image_aug, bounding_boxes=bbs_aug)
+    image_name = '{}_pers'.format(m_image.name)
+    return MetaImage(image_name, image_aug, to_labeled_boxes(bbs_aug))
 
 
 def augment_scale_x(m_image: MetaImage) -> MetaImage:
