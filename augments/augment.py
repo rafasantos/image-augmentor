@@ -1,15 +1,26 @@
 from typing import List
 
 from imgaug.augmenters import Affine, AdditiveGaussianNoise
+from imgaug.augmenters.imgcorruptlike import ElasticTransform
 
 from builders.meta_image import to_bounding_boxes_on_image, to_labeled_boxes
 from struts.meta_image import MetaImage
 
 
+def augment_elastic(m_image: MetaImage) -> MetaImage:
+    elastic_transform = ElasticTransform(severity=[1, 1])
+    augmented_image = elastic_transform(image=m_image.data)
+    return MetaImage(m_image.name, augmented_image, m_image.labeled_boxes)
+
+
 def augment(m_images: List[MetaImage]) -> List[MetaImage]:
     augmentations: List[MetaImage] = []
-    # Augmentations
+    # augmentations: List[MetaImage] = []
+    # # Augmentations
     for m_image in m_images:
+        elastic_image = augment_elastic(m_image)
+        augmentations.append(elastic_image)
+
         noise_images_structs = augment_noise(m_image)
         augmentations.extend(noise_images_structs)
 
@@ -20,6 +31,7 @@ def augment(m_images: List[MetaImage]) -> List[MetaImage]:
         result.extend(rotated_m_images)
 
     return result
+    return augmentations
 
 
 def augment_noise(m_image: MetaImage):
