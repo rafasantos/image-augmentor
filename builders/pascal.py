@@ -41,13 +41,19 @@ def build_label_file_text(m_image: MetaImage) -> str:
         obj = ET.SubElement(annotation, 'object')
         obj_name = ET.SubElement(obj, 'name')
         obj_name.text = labeled_box.label
+        obj_pose = ET.SubElement(obj, 'pose')
+        obj_pose.text = 'Unspecified'
+        obj_truncated = ET.SubElement(obj, 'truncated')
+        obj_truncated.text = '0'
+        obj_difficult = ET.SubElement(obj, 'difficult')
+        obj_difficult.text = '0'
         bdnbox = ET.SubElement(obj, 'bndbox')
         bdnbox_xmin = ET.SubElement(bdnbox, 'xmin')
-        bdnbox_xmin.text = str(labeled_box.x1)
+        bdnbox_xmin.text = str(int(labeled_box.x1))
         bdnbox_ymin = ET.SubElement(bdnbox, 'ymin')
-        bdnbox_ymin.text = str(labeled_box.y1)
+        bdnbox_ymin.text = str(int(labeled_box.y1))
         bdnbox_xmax = ET.SubElement(bdnbox, 'xmax')
-        bdnbox_xmax.text = str(labeled_box.x2)
+        bdnbox_xmax.text = str(int(labeled_box.x2))
         bdnbox_ymax = ET.SubElement(bdnbox, 'ymax')
-        bdnbox_ymax.text = str(labeled_box.y2)
+        bdnbox_ymax.text = str(int(labeled_box.y2))
     return ET.tostring(annotation, encoding='utf8', method='xml').decode()
