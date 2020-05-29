@@ -21,25 +21,17 @@ def augment(m_images: List[MetaImage]) -> List[MetaImage]:
         augmentations.append(augment_shear_x(m_image))
         augmentations.append(augment_shear_y(m_image))
 
-    # Apply two combined augmentations at random
+    # Apply two combined augmentations at random (do not augmentations that change the size of the image in here)
     for m_image in m_images:
         augmented_image = m_image
         for i in range(2):
-            random_int = random.randint(0, 6)
+            random_int = random.randint(0, 2)
             if random_int == 0:
                 augmented_image = augment_elastic_transformation(augmented_image)
             elif random_int == 1:
                 augmented_image = augment_fog(augmented_image)
             elif random_int == 2:
                 augmented_image = augment_noise(augmented_image)
-            elif random_int == 3:
-                augmented_image = augment_scale_x(augmented_image)
-            elif random_int == 4:
-                augmented_image = augment_scale_y(augmented_image)
-            elif random_int == 5:
-                augmented_image = augment_shear_x(augmented_image)
-            elif random_int == 6:
-                augmented_image = augment_shear_y(augmented_image)
         augmentations.append(augmented_image)
 
     # Rotate augmentations
@@ -58,33 +50,32 @@ def augment_elastic_transformation(m_image: MetaImage) -> MetaImage:
 
 
 def augment_fog(m_image: MetaImage) -> MetaImage:
-    severity = random.randint(1, 3)
-    augmentation = Fog(severity=severity)
+    augmentation = Fog(severity=1)
     augmented_image = augmentation(image=m_image.data)
     image_name = '{}_fog'.format(m_image.name)
     return MetaImage(image_name, augmented_image, m_image.labeled_boxes)
 
 
 def augment_scale_x(m_image: MetaImage) -> MetaImage:
-    image_aug, bbs_aug = ScaleX((0.75, 1.5))(image=m_image.data, bounding_boxes=to_bounding_boxes_on_image(m_image))
+    image_aug, bbs_aug = ScaleX((0.75, 1.25))(image=m_image.data, bounding_boxes=to_bounding_boxes_on_image(m_image))
     image_name = '{}_scalex'.format(m_image.name)
     return MetaImage(image_name, image_aug, to_labeled_boxes(bbs_aug))
 
 
 def augment_scale_y(m_image: MetaImage) -> MetaImage:
-    image_aug, bbs_aug = ScaleY((0.75, 1.5))(image=m_image.data, bounding_boxes=to_bounding_boxes_on_image(m_image))
+    image_aug, bbs_aug = ScaleY((0.75, 1.25))(image=m_image.data, bounding_boxes=to_bounding_boxes_on_image(m_image))
     image_name = '{}_scaley'.format(m_image.name)
     return MetaImage(image_name, image_aug, to_labeled_boxes(bbs_aug))
 
 
 def augment_shear_x(m_image: MetaImage) -> MetaImage:
-    image_aug, bbs_aug = ShearX((-5, 5))(image=m_image.data, bounding_boxes=to_bounding_boxes_on_image(m_image))
+    image_aug, bbs_aug = ShearX((-20, 20))(image=m_image.data, bounding_boxes=to_bounding_boxes_on_image(m_image))
     image_name = '{}_shearx'.format(m_image.name)
     return MetaImage(image_name, image_aug, to_labeled_boxes(bbs_aug))
 
 
 def augment_shear_y(m_image: MetaImage) -> MetaImage:
-    image_aug, bbs_aug = ShearY((-5, 5))(image=m_image.data, bounding_boxes=to_bounding_boxes_on_image(m_image))
+    image_aug, bbs_aug = ShearY((-20, 20))(image=m_image.data, bounding_boxes=to_bounding_boxes_on_image(m_image))
     image_name = '{}_sheary'.format(m_image.name)
     return MetaImage(image_name, image_aug, to_labeled_boxes(bbs_aug))
 
