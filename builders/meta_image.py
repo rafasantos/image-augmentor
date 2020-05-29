@@ -1,8 +1,9 @@
 from pathlib import Path
 from typing import List
 from imgaug import BoundingBoxesOnImage, BoundingBox, imageio
-from scripts.builders.pascal import build_labeled_boxes
-from scripts.structs.meta_image import MetaImage, LabeledBox
+from builders.pascal import build_labeled_boxes
+from struts.labeled_box import LabeledBox
+from struts.meta_image import MetaImage
 
 
 def to_bounding_boxes_on_image(m_image: MetaImage) -> BoundingBoxesOnImage:

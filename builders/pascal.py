@@ -1,8 +1,8 @@
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import List
-import xml.etree.ElementTree as ET
-
-from scripts.structs.meta_image import LabeledBox, MetaImage
+from struts.labeled_box import LabeledBox
+from struts.meta_image import MetaImage
 
 
 def build_labeled_boxes(pascal_xml_paths: Path) -> List[LabeledBox]:

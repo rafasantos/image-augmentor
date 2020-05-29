@@ -1,6 +1,5 @@
 from typing import List
-
-from scripts.structs.labeled_box import LabeledBox
+from struts.labeled_box import LabeledBox
 
 
 class MetaImage:

@@ -1,7 +1,9 @@
 from typing import List
+
 from imgaug.augmenters import Affine, AdditiveGaussianNoise
-from scripts.builders.meta_image import to_bounding_boxes_on_image, to_labeled_boxes
-from scripts.structs.meta_image import MetaImage
+
+from builders.meta_image import to_bounding_boxes_on_image, to_labeled_boxes
+from struts.meta_image import MetaImage
 
 
 def augment(m_images: List[MetaImage]) -> List[MetaImage]:

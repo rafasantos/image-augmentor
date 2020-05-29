@@ -1,10 +1,8 @@
 from pathlib import Path
 from typing import List
-
 from PIL import Image
-
-from scripts.builders.pascal import build_label_file_text
-from scripts.structs.meta_image import MetaImage
+from builders.pascal import build_label_file_text
+from struts.meta_image import MetaImage
 
 
 def write_images(m_images: List[MetaImage]):
