@@ -1,7 +1,7 @@
 import random
 from typing import List
 
-from imgaug.augmenters import Affine, AdditiveGaussianNoise
+from imgaug.augmenters import Affine, AdditiveGaussianNoise, ScaleX, ScaleY
 from imgaug.augmenters.imgcorruptlike import ElasticTransform, Fog
 
 from builders.meta_image import to_bounding_boxes_on_image, to_labeled_boxes
@@ -12,14 +12,11 @@ def augment(m_images: List[MetaImage]) -> List[MetaImage]:
     augmentations: List[MetaImage] = []
     # Augmentations
     for m_image in m_images:
-        elastic_image = augment_elastic_transformation(m_image)
-        augmentations.append(elastic_image)
-
-        fogged_image = augment_fog(m_image)
-        augmentations.append(fogged_image)
-
-        noise_images_structs = augment_noise(m_image)
-        augmentations.extend(noise_images_structs)
+        augmentations.append(augment_elastic_transformation(m_image))
+        augmentations.append(augment_fog(m_image))
+        augmentations.extend(augment_noise(m_image))
+        augmentations.append(augment_scale_x(m_image))
+        augmentations.append(augment_scale_y(m_image))
 
     # Rotate augmentations
     result: List[MetaImage] = []
@@ -43,6 +40,20 @@ def augment_fog(m_image: MetaImage) -> MetaImage:
     augmentation = Fog(severity=severity)
     augmented_image = augmentation(image=m_image.data)
     image_name = '{}_fog_'.format(m_image.name)
+    return MetaImage(image_name, augmented_image, m_image.labeled_boxes)
+
+
+def augment_scale_x(m_image: MetaImage) -> MetaImage:
+    augmentation = ScaleX((0.75, 1.5))
+    augmented_image = augmentation(image=m_image.data)
+    image_name = '{}_scalex_'.format(m_image.name)
+    return MetaImage(image_name, augmented_image, m_image.labeled_boxes)
+
+
+def augment_scale_y(m_image: MetaImage) -> MetaImage:
+    augmentation = ScaleY((0.75, 1.5))
+    augmented_image = augmentation(image=m_image.data)
+    image_name = '{}_scaley_'.format(m_image.name)
     return MetaImage(image_name, augmented_image, m_image.labeled_boxes)
 
 
