@@ -1,4 +1,3 @@
-import random
 from typing import List
 
 from imgaug.augmenters import AdditiveGaussianNoise, ScaleX, ScaleY, ShearX, ShearY, Rotate, PerspectiveTransform, \
@@ -12,7 +11,7 @@ from struts.meta_image import MetaImage
 def augment(m_images: List[MetaImage]) -> List[MetaImage]:
     augmentations: List[MetaImage] = []
 
-    # Add augmentations
+    # # Add augmentations
     for m_image in m_images:
         augmentations.append(augment_elastic_transformation(m_image))
         augmentations.append(augment_fog(m_image))
@@ -23,26 +22,15 @@ def augment(m_images: List[MetaImage]) -> List[MetaImage]:
         augmentations.append(augment_shear_y(m_image))
         augmentations.append(augment_perspective(m_image))
 
-    # Apply two combined augmentations at random
-    # Do not augmentations that change the size of the image in this session because we don't wont to bleed the images
-    for m_image in m_images:
-        augmented_image = m_image
-        for i in range(2):
-            random_int = random.randint(0, 2)
-            if random_int == 0:
-                augmented_image = augment_elastic_transformation(augmented_image)
-            elif random_int == 1:
-                augmented_image = augment_fog(augmented_image)
-            elif random_int == 2:
-                augmented_image = augment_noise(augmented_image)
-        augmentations.append(augmented_image)
-
     # Rotate augmentations
-    result: List[MetaImage] = []
+    rotated_augmentations: List[MetaImage] = []
     for m_image in augmentations:
-        result.append(augment_rotation(m_image))
+        rotated_augmentations.append(m_image)
+        rotated_augmentations.append(augment_rot(m_image, 90))
+        rotated_augmentations.append(augment_rot(m_image, 180))
+        rotated_augmentations.append(augment_rot(m_image, 270))
 
-    return result
+    return rotated_augmentations
 
 
 def augment_elastic_transformation(m_image: MetaImage) -> MetaImage:
@@ -96,7 +84,8 @@ def augment_noise(m_image: MetaImage) -> MetaImage:
     return MetaImage(image_name, image_aug, to_labeled_boxes(bbs_aug))
 
 
-def augment_rotation(m_image: MetaImage) -> MetaImage:
-    image_aug, bbs_aug = Rotate((-30, 30))(image=m_image.data, bounding_boxes=to_bounding_boxes_on_image(m_image))
-    image_name = '{}_rot'.format(m_image.name)
+def augment_rot(m_image: MetaImage, base_angle: int) -> MetaImage:
+    angles = (base_angle - 15, base_angle + 15)
+    image_aug, bbs_aug = Rotate(angles)(image=m_image.data, bounding_boxes=to_bounding_boxes_on_image(m_image))
+    image_name = '{}_rot{}'.format(m_image.name, base_angle)
     return MetaImage(image_name, image_aug, to_labeled_boxes(bbs_aug))
