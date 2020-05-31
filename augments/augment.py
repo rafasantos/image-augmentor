@@ -10,7 +10,6 @@ def augment(m_images: List[MetaImage]) -> List[MetaImage]:
     augmentations: List[MetaImage] = []
     for m_image in m_images:
         augmentations.append(m_image)
-        augmentations.append(augment_affine(m_image))
         augmentations.append(augment_perspective(m_image))
         augmentations.append(augment_affine(augment_elastic_transformation(m_image)))
         augmentations.append(augment_affine(augment_fog(m_image)))
@@ -23,7 +22,7 @@ def augment_affine(m_image: MetaImage) -> MetaImage:
     rotate = random.randint(0, 359)
     shear_x = random.randint(-45, 45)
     shear_y = random.randint(-45, 45)
-    affine = Affine(scale=scale, rotate=rotate, shear=[shear_x, shear_y], mode='edge')
+    affine = Affine(scale=scale, rotate=rotate, shear=[shear_x, shear_y], mode='edge', fit_output=True)
     image_aug, bbs_aug = affine(image=m_image.data, bounding_boxes=to_bounding_boxes_on_image(m_image))
     image_name = '{}_aff{}-{}-{}-{}'.format(m_image.name, int(scale * 100), rotate, shear_x, shear_y)
     return MetaImage(image_name, image_aug, bbs_aug)
@@ -44,14 +43,15 @@ def augment_fog(m_image: MetaImage) -> MetaImage:
 
 
 def augment_perspective(m_image: MetaImage) -> MetaImage:
-    image_aug, bbs_aug = CropAndPad(percent=.25)(image=m_image.data, bounding_boxes=to_bounding_boxes_on_image(m_image))
-    image_aug, bbs_aug = PerspectiveTransform(scale=(.04, .12))(image=image_aug, bounding_boxes=bbs_aug)
+    image_aug, bbs_aug = PerspectiveTransform(scale=(.04, .12), fit_output=True)\
+        (image=m_image.data, bounding_boxes=to_bounding_boxes_on_image(m_image))
     image_name = '{}_pers'.format(m_image.name)
     return MetaImage(image_name, image_aug, to_labeled_boxes(bbs_aug))
 
 
 def augment_noise(m_image: MetaImage) -> MetaImage:
-    image_aug, bbs_aug = AdditiveGaussianNoise(scale=(10, 30))(image=m_image.data, bounding_boxes=to_bounding_boxes_on_image(m_image))
+    image_aug, bbs_aug = AdditiveGaussianNoise(scale=(10, 30))\
+        (image=m_image.data, bounding_boxes=to_bounding_boxes_on_image(m_image))
     image_name = '{}_noise'.format(m_image.name)
     return MetaImage(image_name, image_aug, to_labeled_boxes(bbs_aug))
 
