@@ -1,36 +1,32 @@
+import random
 from typing import List
-
-from imgaug.augmenters import AdditiveGaussianNoise, ScaleX, ScaleY, ShearX, ShearY, Rotate, PerspectiveTransform, \
-    CropAndPad
+from imgaug.augmenters import AdditiveGaussianNoise, Rotate, PerspectiveTransform, CropAndPad, Affine
 from imgaug.augmenters.imgcorruptlike import ElasticTransform, Fog
-
 from builders.meta_image import to_bounding_boxes_on_image, to_labeled_boxes
 from struts.meta_image import MetaImage
 
 
 def augment(m_images: List[MetaImage]) -> List[MetaImage]:
     augmentations: List[MetaImage] = []
-
-    # # Add augmentations
     for m_image in m_images:
-        augmentations.append(augment_elastic_transformation(m_image))
-        augmentations.append(augment_fog(m_image))
-        augmentations.append(augment_noise(m_image))
-        augmentations.append(augment_scale_x(m_image))
-        augmentations.append(augment_scale_y(m_image))
-        augmentations.append(augment_shear_x(m_image))
-        augmentations.append(augment_shear_y(m_image))
+        augmentations.append(m_image)
+        augmentations.append(augment_affine(m_image))
         augmentations.append(augment_perspective(m_image))
+        augmentations.append(augment_affine(augment_elastic_transformation(m_image)))
+        augmentations.append(augment_affine(augment_fog(m_image)))
+        augmentations.append(augment_affine(augment_noise(m_image)))
+    return augmentations
 
-    # Rotate augmentations
-    rotated_augmentations: List[MetaImage] = []
-    for m_image in augmentations:
-        rotated_augmentations.append(m_image)
-        rotated_augmentations.append(augment_rot(m_image, 90))
-        rotated_augmentations.append(augment_rot(m_image, 180))
-        rotated_augmentations.append(augment_rot(m_image, 270))
 
-    return rotated_augmentations
+def augment_affine(m_image: MetaImage) -> MetaImage:
+    scale = random.randrange(35, 100) / 100
+    rotate = random.randint(0, 359)
+    shear_x = random.randint(-45, 45)
+    shear_y = random.randint(-45, 45)
+    affine = Affine(scale=scale, rotate=rotate, shear=[shear_x, shear_y], mode='edge')
+    image_aug, bbs_aug = affine(image=m_image.data, bounding_boxes=to_bounding_boxes_on_image(m_image))
+    image_name = '{}_aff{}-{}-{}-{}'.format(m_image.name, int(scale * 100), rotate, shear_x, shear_y)
+    return MetaImage(image_name, image_aug, bbs_aug)
 
 
 def augment_elastic_transformation(m_image: MetaImage) -> MetaImage:
@@ -49,32 +45,8 @@ def augment_fog(m_image: MetaImage) -> MetaImage:
 
 def augment_perspective(m_image: MetaImage) -> MetaImage:
     image_aug, bbs_aug = CropAndPad(percent=.25)(image=m_image.data, bounding_boxes=to_bounding_boxes_on_image(m_image))
-    image_aug, bbs_aug = PerspectiveTransform(scale=(.08, .12))(image=image_aug, bounding_boxes=bbs_aug)
+    image_aug, bbs_aug = PerspectiveTransform(scale=(.04, .12))(image=image_aug, bounding_boxes=bbs_aug)
     image_name = '{}_pers'.format(m_image.name)
-    return MetaImage(image_name, image_aug, to_labeled_boxes(bbs_aug))
-
-
-def augment_scale_x(m_image: MetaImage) -> MetaImage:
-    image_aug, bbs_aug = ScaleX((0.75, 1.25))(image=m_image.data, bounding_boxes=to_bounding_boxes_on_image(m_image))
-    image_name = '{}_scalex'.format(m_image.name)
-    return MetaImage(image_name, image_aug, to_labeled_boxes(bbs_aug))
-
-
-def augment_scale_y(m_image: MetaImage) -> MetaImage:
-    image_aug, bbs_aug = ScaleY((0.75, 1.25))(image=m_image.data, bounding_boxes=to_bounding_boxes_on_image(m_image))
-    image_name = '{}_scaley'.format(m_image.name)
-    return MetaImage(image_name, image_aug, to_labeled_boxes(bbs_aug))
-
-
-def augment_shear_x(m_image: MetaImage) -> MetaImage:
-    image_aug, bbs_aug = ShearX((-20, 20))(image=m_image.data, bounding_boxes=to_bounding_boxes_on_image(m_image))
-    image_name = '{}_shearx'.format(m_image.name)
-    return MetaImage(image_name, image_aug, to_labeled_boxes(bbs_aug))
-
-
-def augment_shear_y(m_image: MetaImage) -> MetaImage:
-    image_aug, bbs_aug = ShearY((-20, 20))(image=m_image.data, bounding_boxes=to_bounding_boxes_on_image(m_image))
-    image_name = '{}_sheary'.format(m_image.name)
     return MetaImage(image_name, image_aug, to_labeled_boxes(bbs_aug))
 
 
