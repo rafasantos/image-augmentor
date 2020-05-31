@@ -26,10 +26,13 @@ def to_labeled_boxes(bounding_boxes_on_image: BoundingBoxesOnImage) -> List[Labe
 
 def __obtain_exif_rotation(image_path: Path) -> int:
     image = Image.open(image_path)
+    exif = image._getexif()
+    if exif is None:
+        return None
+    exif = dict(exif.items())
     for orientation in ExifTags.TAGS.keys():
         if ExifTags.TAGS[orientation] == 'Orientation':
             break
-    exif = dict(image._getexif().items())
     if exif[orientation] == 3:
         return 180
     elif exif[orientation] == 6:
